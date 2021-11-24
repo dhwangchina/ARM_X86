@@ -1,0 +1,7 @@
+make TARGET=(target) SYSTEM=(system) [clean|all|install]
+	target:	oct/pc
+	system:	cygwin/linux
+
+example:
+	make TARGET=oct SYSTEM=linux all
+

@@ -1,0 +1,38 @@
+#子系统Makefile
+
+ifeq (${PROJECT_TYPE},boot)
+SUBSYSTEM_MODULES += boot
+else
+SUBSYSTEM_MODULES_EXCLUDE += boot makefile
+SUBSYSTEM_MODULES = $(notdir $(filter-out $(addprefix ../,$(SUBSYSTEM_MODULES_EXCLUDE)),$(wildcard ../*)))
+endif
+
+SUBSYSTEM_PATH = $(shell pwd)
+SUBSYSTEM_NAME = $(notdir $(SUBSYSTEM_PATH:%/makefile=%))
+
+SUBSYSTEM_OBJ = ${SUBSYSTEM_NAME}.o
+SUBSYSTEM_OUTPUT_PATH = ${OUTPUT}/${SUBSYSTEM_NAME}
+SUBSYSTEM_OUTPUT = $(SUBSYSTEM_OUTPUT_PATH)/../${SUBSYSTEM_OBJ}
+
+MODULE_OBJS = $(addsuffix .o,$(SUBSYSTEM_MODULES))
+MODULE_OUTPUTS = $(addprefix $(SUBSYSTEM_OUTPUT_PATH)/, ${MODULE_OBJS})
+
+all:${SUBSYSTEM_OUTPUT_PATH} ${SUBSYSTEM_OUTPUT}
+	@${TOOL_RM} ${MODULE_OUTPUTS}
+
+${SUBSYSTEM_OUTPUT_PATH}:
+	@${TOOL_MKDIR} "$@"
+
+${SUBSYSTEM_OUTPUT}:$(MODULE_OUTPUTS)
+	@${TOOL_ECHO} 'Building target: $@'
+	${TOOL_LD_PARTIAL} ${PROJECT_LD_PARTIAL_OPTION} $^ -o "$@"
+	@${TOOL_ECHO} 'Finished building target: $@'
+	@${TOOL_ECHO} ' '
+
+$(MODULE_OUTPUTS):
+	@$(MAKE) -e -C ../$(basename $(notdir $@))/makefile "OUTPUT=${SUBSYSTEM_OUTPUT_PATH}"
+
+clean:
+	${TOOL_RM} ${SUBSYSTEM_OUTPUT} ${SUBSYSTEM_OUTPUT_PATH}
+
+.PHONY: all clean
